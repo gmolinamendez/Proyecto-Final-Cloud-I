@@ -1,10 +1,10 @@
 .terraform/
+terraform/.terraform/
+terraform/build/
 *.tfstate
-*.tfstate.backup
-.terraform.lock.hcl
-*.zip
-
-*.zip
+*.tfstate.*
+*.tfplan
+plan.bin
 __pycache__/
-.env
-
+*.pyc
+backend/lambdas/*.zip

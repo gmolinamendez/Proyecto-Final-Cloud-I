@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CloudShop Enterprise</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --text: #1d2430;
+        --muted: #667085;
+        --line: #d9dee7;
+        --brand: #0f766e;
+        --brand-dark: #115e59;
+        --danger: #b42318;
+        --warn: #b54708;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
+
+      header {
+        align-items: center;
+        background: #111827;
+        color: white;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        padding: 16px 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      main {
+        margin: 0 auto;
+        max-width: 1180px;
+        padding: 24px;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        font: inherit;
+        padding: 10px 12px;
+      }
+
+      button {
+        background: var(--brand);
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      button.secondary {
+        background: white;
+        color: var(--text);
+      }
+
+      button.danger {
+        background: var(--danger);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      input,
+      select,
+      textarea {
+        background: white;
+        color: var(--text);
+        width: 100%;
+      }
+
+      label {
+        color: var(--muted);
+        display: grid;
+        font-size: 13px;
+        gap: 6px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .form-grid {
+        align-items: end;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .stat-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-bottom: 16px;
+      }
+
+      .stat-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .stat-card strong {
+        display: block;
+        font-size: 28px;
+        margin-top: 8px;
+      }
+
+      .list-table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      .list-table th,
+      .list-table td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 8px;
+        text-align: left;
+      }
+
+      .list-table th {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .panel,
+      .item {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .item {
+        display: grid;
+        gap: 8px;
+      }
+
+      .toolbar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .row {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .badge {
+        background: #e6fffb;
+        border: 1px solid #99f6e4;
+        border-radius: 999px;
+        color: var(--brand-dark);
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 8px;
+      }
+
+      .error {
+        color: var(--danger);
+        font-weight: 700;
+      }
+
+      .ok {
+        color: var(--brand-dark);
+        font-weight: 700;
+      }
+
+      pre {
+        background: #0b1220;
+        border-radius: 8px;
+        color: #d1e7ff;
+        overflow: auto;
+        padding: 12px;
+      }
+
+      @media (max-width: 760px) {
+        .grid.two,
+        .grid.three,
+        .form-grid,
+        .stat-grid {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>CloudShop Enterprise</h1>
+        <div class="muted" id="sessionInfo">Sin sesion</div>
+      </div>
+      <button class="secondary" id="logoutBtn">Salir</button>
+    </header>
+    <main>
+      <section class="panel" id="setupView"></section>
+      <section id="appView" hidden>
+        <nav id="nav"></nav>
+        <div id="content"></div>
+      </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script>
+      const state = {
+        config: {
+          ...JSON.parse(localStorage.getItem("cloudshop_config") || "{}"),
+          ...(window.CLOUDSHOP_CONFIG || {}),
+        },
+        token: localStorage.getItem("cloudshop_token") || "",
+        claims: {},
+        products: [],
+        stores: [],
+        cart: JSON.parse(localStorage.getItem("cloudshop_cart") || "[]"),
+        view: "catalog",
+      };
+
+      const setupView = document.getElementById("setupView");
+      const appView = document.getElementById("appView");
+      const content = document.getElementById("content");
+      const nav = document.getElementById("nav");
+      const sessionInfo = document.getElementById("sessionInfo");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("cloudshop_token");
+        state.token = "";
+        state.claims = {};
+        render();
+      });
+
+      function saveConfig(config) {
+        state.config = config;
+        localStorage.setItem("cloudshop_config", JSON.stringify(config));
+      }
+
+      function saveCart() {
+        localStorage.setItem("cloudshop_cart", JSON.stringify(state.cart));
+      }
+
+      function parseJwt(token) {
+        if (!token) return {};
+        const payload = token.split(".")[1];
+        return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+      }
+
+      function groups() {
+        const raw = state.claims["cognito:groups"] || [];
+        if (Array.isArray(raw)) return raw;
+        return String(raw).replace("[", "").replace("]", "").split(",").map((g) => g.trim()).filter(Boolean);
+      }
+
+      function hasRole(role) {
+        return groups().includes(role);
+      }
+
+      async function login(username, password) {
+        const region = state.config.region;
+        const body = {
+          AuthFlow: "USER_PASSWORD_AUTH",
+          ClientId: state.config.clientId,
+          AuthParameters: { USERNAME: username, PASSWORD: password },
+        };
+        const res = await fetch(`https://cognito-idp.${region}.amazonaws.com/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-amz-json-1.1",
+            "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth",
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "No se pudo iniciar sesion");
+        state.token = data.AuthenticationResult.IdToken;
+        state.claims = parseJwt(state.token);
+        localStorage.setItem("cloudshop_token", state.token);
+      }
+
+      async function api(path, options = {}) {
+        const res = await fetch(`${state.config.apiUrl}${path}`, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${state.token}`,
+            ...(options.headers || {}),
+          },
+        });
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
+        if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
+        return data;
+      }
+
+      function formData(form) {
+        return Object.fromEntries(new FormData(form).entries());
+      }
+
+      function money(value) {
+        return `$${Number(value || 0).toFixed(2)}`;
+      }
+
+      function shortId(value) {
+        if (!value) return "Sin dato";
+        return String(value).length > 12 ? `${String(value).slice(0, 8)}...` : String(value);
+      }
+
+      function renderSimpleTable(headers, rows) {
+        if (!rows.length) return "<p class='muted'>Sin datos disponibles.</p>";
+        return `
+          <table class="list-table">
+            <thead><tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr></thead>
+            <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell ?? "Sin dato"}</td>`).join("")}</tr>`).join("")}</tbody>
+          </table>
+        `;
+      }
+
+      function renderSetup(message = "") {
+        setupView.hidden = false;
+        appView.hidden = true;
+        logoutBtn.hidden = true;
+        setupView.innerHTML = `
+          <div class="grid two">
+            <form class="grid" id="configForm">
+              <h2>Configuracion</h2>
+              <label>API URL<input name="apiUrl" value="${state.config.apiUrl || ""}" placeholder="https://xxxx.execute-api.us-east-1.amazonaws.com" required /></label>
+              <label>Cognito Client ID<input name="clientId" value="${state.config.clientId || ""}" required /></label>
+              <label>Region<input name="region" value="${state.config.region || "us-east-1"}" required /></label>
+              <button>Guardar configuracion</button>
+            </form>
+            <form class="grid" id="loginForm">
+              <h2>Login</h2>
+              <label>Usuario<input name="username" placeholder="admin-demo" required /></label>
+              <label>Password<input name="password" type="password" required /></label>
+              <button>Entrar</button>
+              <div class="muted">Demo: admin-demo, operador-demo, cliente-demo / CloudShop123.</div>
+              <div class="error">${message}</div>
+            </form>
+          </div>
+        `;
+        document.getElementById("configForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          saveConfig(formData(event.target));
+          renderSetup("Configuracion guardada");
+        });
+        document.getElementById("loginForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            const data = formData(event.target);
+            await login(data.username, data.password);
+            render();
+          } catch (error) {
+            renderSetup(error.message);
+          }
+        });
+      }
+
+      function renderNav() {
+        const items = [
+          ["catalog", "Catalogo"],
+          ["cart", `Carrito (${state.cart.length})`],
+          ["orders", "Pedidos"],
+        ];
+        if (hasRole("Administrador")) {
+          items.push(["dashboard", "Dashboard"], ["users", "Usuarios"], ["stores", "Tiendas"], ["products", "Productos"]);
+        }
+        if (hasRole("Operador")) {
+          items.push(["products", "Inventario"]);
+        }
+        nav.innerHTML = items.map(([id, label]) => `<button class="${state.view === id ? "" : "secondary"}" data-view="${id}">${label}</button>`).join("");
+        nav.querySelectorAll("button").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.view = button.dataset.view;
+            renderApp();
+          });
+        });
+      }
+
+      async function loadCatalog() {
+        const [products, stores] = await Promise.all([api("/productos"), api("/tiendas")]);
+        state.products = (products.productos || []).filter((product) =>
+          product.producto_id &&
+          product.nombre &&
+          product.precio !== undefined &&
+          product.inventario !== undefined
+        );
+        state.stores = stores.tiendas || [];
+      }
+
+      async function renderCatalog() {
+        await loadCatalog();
+        content.innerHTML = `
+          <div class="toolbar"><h2>Catalogo</h2><span class="badge">${state.products.length} productos</span></div>
+          <div class="grid three">
+            ${state.products.map((p) => `
+              <article class="item">
+                <h3>${p.nombre}</h3>
+                <div class="muted">${p.categoria || "Sin categoria"} | SKU ${p.codigo}</div>
+                <p>${p.descripcion || ""}</p>
+                <div><strong>${money(p.precio)}</strong></div>
+                <div>Inventario: ${p.inventario}</div>
+                <button data-add="${p.producto_id}" ${Number(p.inventario) <= 0 ? "disabled" : ""}>Agregar</button>
+              </article>
+            `).join("")}
+          </div>
+        `;
+        content.querySelectorAll("[data-add]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const product = state.products.find((p) => p.producto_id === button.dataset.add);
+            const existing = state.cart.find((item) => item.producto_id === product.producto_id);
+            if (existing) existing.cantidad += 1;
+            else state.cart.push({ producto_id: product.producto_id, nombre: product.nombre, precio: product.precio, cantidad: 1 });
+            saveCart();
+            renderApp();
+          });
+        });
+      }
+
+      function renderCart() {
+        const total = state.cart.reduce((sum, item) => sum + Number(item.precio) * Number(item.cantidad), 0);
+        content.innerHTML = `
+          <div class="toolbar"><h2>Carrito</h2><strong>${money(total)}</strong></div>
+          <div class="grid">
+            ${state.cart.map((item, index) => `
+              <div class="item">
+                <div class="toolbar"><strong>${item.nombre}</strong><span>${money(Number(item.precio) * Number(item.cantidad))}</span></div>
+                <label>Cantidad<input type="number" min="1" value="${item.cantidad}" data-qty="${index}" /></label>
+                <button class="danger" data-remove="${index}">Eliminar</button>
+              </div>
+            `).join("") || "<p class='muted'>El carrito esta vacio.</p>"}
+          </div>
+          <div class="row" style="margin-top:16px">
+            <button id="createOrder" ${state.cart.length ? "" : "disabled"}>Crear pedido</button>
+            <button class="secondary" id="clearCart">Vaciar</button>
+          </div>
+          <div id="cartMsg"></div>
+        `;
+        content.querySelectorAll("[data-qty]").forEach((input) => {
+          input.addEventListener("change", () => {
+            state.cart[Number(input.dataset.qty)].cantidad = Number(input.value);
+            saveCart();
+            renderCart();
+          });
+        });
+        content.querySelectorAll("[data-remove]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.cart.splice(Number(button.dataset.remove), 1);
+            saveCart();
+            renderApp();
+          });
+        });
+        document.getElementById("clearCart").addEventListener("click", () => {
+          state.cart = [];
+          saveCart();
+          renderApp();
+        });
+        document.getElementById("createOrder").addEventListener("click", async () => {
+          try {
+            const items = state.cart.map((item) => ({ producto_id: item.producto_id, cantidad: Number(item.cantidad) }));
+            const order = await api("/pedidos", { method: "POST", body: JSON.stringify({ items }) });
+            state.cart = [];
+            saveCart();
+            document.getElementById("cartMsg").innerHTML = `<p class="ok">Pedido creado: ${order.pedido_id}</p>`;
+          } catch (error) {
+            document.getElementById("cartMsg").innerHTML = `<p class="error">${error.message}</p>`;
+          }
+        });
+      }
+
+      async function renderOrders() {
+        const data = await api("/pedidos");
+        content.innerHTML = `
+          <div class="toolbar"><h2>Pedidos</h2><span class="badge">${(data.pedidos || []).length}</span></div>
+          <div class="grid">
+            ${(data.pedidos || []).map((p) => `
+              <div class="item">
+                <div class="toolbar"><strong>${p.pedido_id}</strong><span class="badge">${p.estado}</span></div>
+                <div>Total: ${money(p.total)} | Fecha: ${p.fecha}</div>
+                <div class="muted">${(p.items || []).map((i) => `${i.nombre} x${i.cantidad}`).join(", ")}</div>
+                <div class="row">
+                  ${hasRole("Administrador") || hasRole("Operador") ? `<select data-state="${p.pedido_id}">
+                    ${["Pendiente", "Confirmado", "En preparacion", "Enviado", "Entregado", "Cancelado"].map((s) => `<option ${p.estado === s ? "selected" : ""}>${s}</option>`).join("")}
+                  </select><button data-save-state="${p.pedido_id}">Actualizar</button>` : ""}
+                  <button class="danger" data-cancel="${p.pedido_id}">Cancelar</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+        content.querySelectorAll("[data-save-state]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const pedidoId = button.dataset.saveState;
+            const estado = content.querySelector(`[data-state="${pedidoId}"]`).value;
+            await api(`/pedidos/${pedidoId}/estado`, { method: "PUT", body: JSON.stringify({ estado }) });
+            renderOrders();
+          });
+        });
+        content.querySelectorAll("[data-cancel]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            await api(`/pedidos/${button.dataset.cancel}`, { method: "DELETE" });
+            renderOrders();
+          });
+        });
+      }
+
+      async function renderDashboard() {
+        const data = await api("/dashboard");
+        const ventasPorTienda = data.ventas_por_tienda || [];
+        const masVendidos = data.productos_mas_vendidos || [];
+        const agotados = data.productos_agotados || [];
+        const mejoresClientes = data.clientes_con_mas_compras || [];
+        const estados = data.pedidos_por_estado || [];
+        const pedidosTotales = estados.reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
+
+        content.innerHTML = `
+          <div class="toolbar"><h2>Dashboard Ejecutivo</h2><span class="badge">Actualizado en vivo</span></div>
+          <section class="stat-grid">
+            <div class="stat-card"><span class="muted">Total de ventas</span><strong>${money(data.total_ventas)}</strong></div>
+            <div class="stat-card"><span class="muted">Pedidos registrados</span><strong>${pedidosTotales}</strong></div>
+            <div class="stat-card"><span class="muted">Productos agotados</span><strong>${agotados.length}</strong></div>
+          </section>
+          <section class="grid two">
+            <div class="panel">
+              <h3>Ventas por tienda</h3>
+              ${renderSimpleTable(["Tienda", "Total"], ventasPorTienda.map((item) => [shortId(item.tienda_id), money(item.total)]))}
+            </div>
+            <div class="panel">
+              <h3>Productos mas vendidos</h3>
+              ${renderSimpleTable(["Producto", "Cantidad"], masVendidos.map((item) => [item.nombre || shortId(item.producto_id), item.cantidad]))}
+            </div>
+            <div class="panel">
+              <h3>Clientes con mas compras</h3>
+              ${renderSimpleTable(["Cliente", "Compras"], mejoresClientes.map((item) => [item.nombre || shortId(item.usuario_id), item.compras]))}
+            </div>
+            <div class="panel">
+              <h3>Pedidos por estado</h3>
+              ${renderSimpleTable(["Estado", "Cantidad"], estados.map((item) => [item.estado, item.cantidad]))}
+            </div>
+          </section>
+        `;
+      }
+
+      async function renderUsers() {
+        const data = await api("/usuarios");
+        const usersByEmail = new Map();
+        (data.usuarios || [])
+          .filter((user) => user.nombre && user.email && user.rol)
+          .forEach((user) => usersByEmail.set(user.email, user));
+        const users = [...usersByEmail.values()].sort((a, b) => a.email.localeCompare(b.email));
+        content.innerHTML = `
+          <div class="grid">
+            <form class="panel" id="userForm">
+              <h2>Crear usuario</h2>
+              <div class="form-grid">
+                <label>Nombre<input name="nombre" required /></label>
+                <label>Email<input name="email" type="email" required /></label>
+                <label>Password<input name="password" type="password" value="CloudShop123" required /></label>
+                <label>Rol<select name="rol"><option>Administrador</option><option>Operador</option><option selected>Cliente</option></select></label>
+              </div>
+              <div class="row" style="margin-top:12px"><button>Crear usuario</button></div>
+            </form>
+            <section class="panel">
+              <div class="toolbar"><h2>Usuarios</h2><span class="badge">${users.length} activos</span></div>
+              <div class="grid three">${users.map((u) => `<div class="item"><strong>${u.nombre}</strong><span>${u.email}</span><span class="badge">${u.rol}</span></div>`).join("")}</div>
+            </section>
+          </div>
+        `;
+        document.getElementById("userForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          await api("/usuarios", { method: "POST", body: JSON.stringify(formData(event.target)) });
+          renderUsers();
+        });
+      }
+
+      async function renderStores() {
+        const data = await api("/tiendas");
+        content.innerHTML = `
+          <div class="grid two">
+            <form class="panel grid" id="storeForm">
+              <h2>Crear tienda</h2>
+              <label>Nombre<input name="nombre" required /></label>
+              <label>Descripcion<textarea name="descripcion"></textarea></label>
+              <button>Crear</button>
+            </form>
+            <section class="panel">
+              <h2>Tiendas</h2>
+              <div class="grid">${(data.tiendas || []).map((t) => `<div class="item"><strong>${t.nombre}</strong><span>${t.descripcion || ""}</span></div>`).join("")}</div>
+            </section>
+          </div>
+        `;
+        document.getElementById("storeForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          await api("/tiendas", { method: "POST", body: JSON.stringify(formData(event.target)) });
+          renderStores();
+        });
+      }
+
+      async function renderProducts() {
+        await loadCatalog();
+        content.innerHTML = `
+          <div class="grid two">
+            ${hasRole("Administrador") ? `<form class="panel grid" id="productForm">
+              <h2>Crear producto</h2>
+              <label>Codigo<input name="codigo" required /></label>
+              <label>Nombre<input name="nombre" required /></label>
+              <label>Descripcion<textarea name="descripcion" required></textarea></label>
+              <label>Categoria<input name="categoria" required /></label>
+              <label>Precio<input name="precio" type="number" step="0.01" min="0" required /></label>
+              <label>Inventario<input name="inventario" type="number" min="0" required /></label>
+              <label>Tienda<select name="tienda_id">${state.stores.map((s) => `<option value="${s.tienda_id}">${s.nombre}</option>`).join("")}</select></label>
+              <button>Crear</button>
+            </form>` : "<div></div>"}
+            <section class="panel">
+              <h2>Productos</h2>
+              <div class="grid">${state.products.map((p) => `
+                <div class="item">
+                  <strong>${p.nombre}</strong>
+                  <span>${money(p.precio)} | Inv: ${p.inventario}</span>
+                  <div class="row">
+                    <input type="number" min="0" value="${p.inventario}" data-inv="${p.producto_id}" />
+                    <button data-save-inv="${p.producto_id}">Guardar inventario</button>
+                    ${hasRole("Administrador") ? `<button class="danger" data-delete-product="${p.producto_id}">Desactivar</button>` : ""}
+                  </div>
+                </div>`).join("")}</div>
+            </section>
+          </div>
+        `;
+        const productForm = document.getElementById("productForm");
+        if (productForm) {
+          productForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            await api("/productos", { method: "POST", body: JSON.stringify(formData(event.target)) });
+            renderProducts();
+          });
+        }
+        content.querySelectorAll("[data-save-inv]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const id = button.dataset.saveInv;
+            const inventario = Number(content.querySelector(`[data-inv="${id}"]`).value);
+            await api(`/productos/${id}`, { method: "PUT", body: JSON.stringify({ inventario }) });
+            renderProducts();
+          });
+        });
+        content.querySelectorAll("[data-delete-product]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            await api(`/productos/${button.dataset.deleteProduct}`, { method: "DELETE" });
+            renderProducts();
+          });
+        });
+      }
+
+      async function renderApp() {
+        setupView.hidden = true;
+        appView.hidden = false;
+        logoutBtn.hidden = false;
+        sessionInfo.textContent = `${state.claims.email || "usuario"} | ${groups().join(", ") || "sin rol"}`;
+        renderNav();
+        try {
+          if (state.view === "catalog") await renderCatalog();
+          if (state.view === "cart") renderCart();
+          if (state.view === "orders") await renderOrders();
+          if (state.view === "dashboard") await renderDashboard();
+          if (state.view === "users") await renderUsers();
+          if (state.view === "stores") await renderStores();
+          if (state.view === "products") await renderProducts();
+        } catch (error) {
+          content.innerHTML = `<p class="error">${error.message}</p>`;
+        }
+      }
+
+      function render() {
+        state.claims = parseJwt(state.token);
+        if (!state.token || !state.config.apiUrl || !state.config.clientId || !state.config.region) {
+          renderSetup();
+        } else {
+          renderApp();
+        }
+      }
+
+      render();
+    </script>
+  </body>
+</html>
